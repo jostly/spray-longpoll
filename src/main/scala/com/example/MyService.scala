@@ -128,5 +128,8 @@ trait MyService extends HttpService with TwirlSupport {
     } ~
     pathPrefix("static" / Segment) { dir =>
       getFromResourceDirectory(dir)
+    } ~
+    pathPrefix(Segment) { file =>
+      redirect("/static/webroot/" + file, StatusCodes.MovedPermanently)
     }
 }
