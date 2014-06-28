@@ -2,7 +2,7 @@ organization  := "com.example"
 
 version       := "0.1"
 
-scalaVersion  := "2.10.0"
+scalaVersion  := "2.11.1"
 
 scalacOptions := Seq("-unchecked", "-deprecation", "-encoding", "utf8")
 
@@ -11,13 +11,13 @@ resolvers ++= Seq(
 )
 
 libraryDependencies ++= Seq(
-  "io.spray"            %   "spray-can"     % "1.1-M7",
-  "io.spray"            %   "spray-routing" % "1.1-M7",
-  "io.spray"            %   "spray-testkit" % "1.1-M7",
-  "com.typesafe.akka"   %%  "akka-actor"    % "2.1.0",
-  "org.specs2"          %%  "specs2"        % "1.13" % "test"
+  "io.spray"            %%  "spray-can"     % "1.3.1",
+  "io.spray"            %%  "spray-routing" % "1.3.1",
+  "io.spray"            %%  "spray-testkit" % "1.3.1",
+  "com.typesafe.akka"   %%  "akka-actor"    % "2.3.2",
+  "org.specs2"          %%  "specs2"        % "2.3.12" % "test"
 )
 
 seq(Revolver.settings: _*)
 
-seq(Twirl.settings: _*)
+lazy val root = (project in file(".")).enablePlugins(SbtTwirl)
