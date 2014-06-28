@@ -20,4 +20,6 @@ libraryDependencies ++= Seq(
 
 seq(Revolver.settings: _*)
 
+seq(com.typesafe.sbt.SbtStartScript.startScriptForClassesSettings: _*)
+
 lazy val root = (project in file(".")).enablePlugins(SbtTwirl)
