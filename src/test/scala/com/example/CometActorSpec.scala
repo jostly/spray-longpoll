@@ -35,31 +35,6 @@ class CometActorSpec extends Specification with NoTimeConversions with Mockito {
 
       there was MockitoVerificationWithTimeout(1.second).one(ctx).complete(argThat(===(HttpResponse(StatusCodes.OK))))(any)
     }
-    "send message back to client when message arrives after poll" in new AkkaTestkitSpecs2Support(ActorSystem("CometActorSpec", cfg)) {
-      val data = HttpEntity("data")
-
-      val cometActor = system.actorOf(Props(classOf[CometActor]))
-
-      val ctx = mock[RequestContext]
-      cometActor ! Poll("id1", ctx)
-      cometActor ! CometMessage("id1", data)
-
-      there was MockitoVerificationWithTimeout(1.second).one(ctx).complete(argThat(===(HttpResponse(entity=data))))(any)
-    }
-    "send message back to client when message arrives before poll" in new AkkaTestkitSpecs2Support(ActorSystem("CometActorSpec", cfg)) {
-      val data = HttpEntity("data")
-
-      val cometActor = system.actorOf(Props(classOf[CometActor]))
-
-      val ctx = mock[RequestContext]
-
-      cometActor ! Poll("id1", ctx)
-      there was MockitoVerificationWithTimeout(1.second).one(ctx).complete(argThat(===(HttpResponse(StatusCodes.OK))))(any)
-
-      cometActor ! CometMessage("id1", data)
-      cometActor ! Poll("id1", ctx)
-      there was MockitoVerificationWithTimeout(1.second).one(ctx).complete(argThat(===(HttpResponse(entity=data))))(any)
-    }
     "broadcast message to all pollers" in new AkkaTestkitSpecs2Support(ActorSystem("CometActorSpec", cfg)) {
       val data = HttpEntity("data")
 
@@ -69,13 +44,12 @@ class CometActorSpec extends Specification with NoTimeConversions with Mockito {
       val ctx2 = mock[RequestContext]
 
       cometActor ! Poll("id1", ctx1)
-      there was MockitoVerificationWithTimeout(1.second).one(ctx1).complete(argThat(===(HttpResponse(StatusCodes.OK))))(any)
-
       cometActor ! Poll("id2", ctx2)
+
       cometActor ! BroadcastMessage(data)
-      cometActor ! Poll("id1", ctx1)
-      there was MockitoVerificationWithTimeout(1.second).one(ctx2).complete(argThat(===(HttpResponse(entity=data))))(any)
+
       there was MockitoVerificationWithTimeout(1.second).one(ctx1).complete(argThat(===(HttpResponse(entity=data))))(any)
+      there was MockitoVerificationWithTimeout(1.second).one(ctx2).complete(argThat(===(HttpResponse(entity=data))))(any)
     }
   }
 

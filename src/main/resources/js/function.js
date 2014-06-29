@@ -4,7 +4,7 @@ var name = prompt("Enter your nickname");
 
 function doLongPoll() {
     console.log("Starting long poll!!")
-    $.ajax({url: '/comet', data: {id:name}})
+    $.ajax({url: '/comet'})
         .done(function(message) {
             if(message.length > 0) {
                 console.log("Received long poll message: " + message);
