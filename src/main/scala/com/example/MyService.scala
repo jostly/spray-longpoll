@@ -5,6 +5,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import spray.routing._
 import spray.http._
 import scala.concurrent.duration._
+import com.example.Implicits._
 
 // we don't implement our route structure directly in the service actor because
 // we want to be able to test it independently, without having to spin up an actor
@@ -55,9 +56,11 @@ class CometActor extends Actor {
   var toTimers: Map[String, Cancellable] = Map.empty      // list of timeout timers for clients
   var requests: Map[String, RequestContext] = Map.empty   // list of long-poll RequestContexts
 
+  val conf = context.system.settings.config.getConfig("comet-actor")
+
   val gcTime = 1.minute               // if client doesnt respond within this time, its garbage collected
-  val clientTimeout = 7.seconds       // long-poll requests are closed after this much time, clients reconnect after this
-  val rescheduleDuration = 5.seconds  // reschedule time for alive client which hasnt polled since last message
+  val clientTimeout = conf.getDuration("client-timeout")            // long-poll requests are closed after this much time, clients reconnect after this
+  val rescheduleDuration = conf.getDuration("reschedule-duration")  // reschedule time for alive client which hasnt polled since last message
   val retryCount = 10                 // number of reschedule retries before dropping the message
 
   def receive = {
