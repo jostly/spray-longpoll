@@ -1,3 +1,6 @@
+import com.typesafe.sbt.SbtNativePackager._
+import NativePackagerKeys._
+
 organization  := "com.example"
 
 version       := "0.1"
@@ -23,3 +26,5 @@ seq(Revolver.settings: _*)
 seq(com.typesafe.sbt.SbtStartScript.startScriptForClassesSettings: _*)
 
 lazy val root = (project in file(".")).enablePlugins(SbtTwirl)
+
+packageArchetype.java_application
