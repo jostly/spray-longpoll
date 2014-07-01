@@ -6,6 +6,8 @@ import spray.routing._
 import spray.http._
 import com.example.Implicits._
 import java.util.UUID
+import spray.routing.directives.LogEntry
+import akka.event.Logging
 
 // we don't implement our route structure directly in the service actor because
 // we want to be able to test it independently, without having to spin up an actor
@@ -76,29 +78,36 @@ trait MyService extends HttpService with TwirlSupport {
 
   val cometActor = actorRefFactory.actorOf(Props[CometActor])
 
+  def showRepoResponses(request: HttpRequest): HttpResponsePart ⇒ Option[LogEntry] = {
+    case HttpResponse(s, _, _, _) ⇒ Some(LogEntry(s"${s.intValue}: ${request.uri}", Logging.DebugLevel))
+    case _ ⇒ None
+  }
+
   val myRoute =
-    path("") {
-      get {
-        complete(html.page())
-      }
-    } ~
-    path("comet") {
-      get {
-        cometActor ! Poll(UUID.randomUUID.toString, _)
-      }
-    } ~
-    path("sendMessage") {
-      get {
-        parameters('name, 'message) { (name:String, message:String) =>
-          cometActor ! BroadcastMessage(HttpEntity("%s : %s".format(name, message)))
-          complete(StatusCodes.OK)
+    logRequestResponse(showRepoResponses _) {
+      path("") {
+        get {
+          complete(html.page())
         }
+      } ~
+      path("comet") {
+        get {
+          cometActor ! Poll(UUID.randomUUID.toString, _)
+        }
+      } ~
+      path("sendMessage") {
+        get {
+          parameters('name, 'message) { (name: String, message: String) =>
+            cometActor ! BroadcastMessage(HttpEntity("%s : %s".format(name, message)))
+            complete(StatusCodes.OK)
+          }
+        }
+      } ~
+      pathPrefix("static" / Segment) { dir =>
+        getFromResourceDirectory(dir)
+      } ~
+      pathPrefixTest(Segment) { file =>
+        getFromResourceDirectory("webroot")
       }
-    } ~
-    pathPrefix("static" / Segment) { dir =>
-      getFromResourceDirectory(dir)
-    } ~
-    path(Segment) { file =>
-      redirect("/static/webroot/" + file, StatusCodes.MovedPermanently)
     }
 }
