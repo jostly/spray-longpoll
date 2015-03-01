@@ -11,5 +11,5 @@ object Boot extends App {
   val service = system.actorOf(Props[MyServiceActor], "my-service")
 
   // create a new HttpServer using our handler tell it where to bind to
-  IO(Http) ! Http.Bind(service, interface = "0.0.0.0", port = sys.env.get("PORT").getOrElse("8080").toInt)
+  IO(Http) ! Http.Bind(service, interface = "0.0.0.0", port = sys.env.getOrElse("PORT", "8080").toInt)
 }

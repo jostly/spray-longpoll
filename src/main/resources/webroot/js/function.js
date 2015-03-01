@@ -21,8 +21,11 @@ function sendMessage(event) {
     event.preventDefault();
     var message = messageBox.val();
     messageBox.val('');
-    $.ajax({url: '/sendMessage', data: {name:name, message:message}})
-        .done(function() {
+    $.ajax("/sendMessage", {
+        method: "post",
+        data: JSON.stringify({name:name, message:message}),
+        contentType: "application/json"
+    }).done(function() {
             console.log("sendMessage success");
         });
 }

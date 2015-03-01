@@ -1,6 +1,10 @@
 package com.example
 
 import akka.actor._
+import org.json4s.Formats
+import org.json4s.NoTypeHints
+import org.json4s.native.Serialization
+import spray.httpx.Json4sSupport
 import scala.concurrent.ExecutionContext.Implicits.global
 import spray.routing._
 import spray.http._
@@ -58,7 +62,7 @@ class CometActor extends Actor {
       toTimers += (id -> context.system.scheduler.scheduleOnce(clientTimeout, self, PollTimeout(id)))
 
     case PollTimeout(id) =>
-      requests.get(id).map(_.complete(HttpResponse(StatusCodes.OK)))
+      requests.get(id).map(_.complete(HttpResponse(StatusCodes.NoContent)))
       requests -= id
       toTimers -= id
 
@@ -73,10 +77,14 @@ class CometActor extends Actor {
   }
 }
 
+case class ChatMessage(name: String, message: String)
+
 // this trait defines our service behavior independently from the service actor
-trait MyService extends HttpService with TwirlSupport {
+trait MyService extends HttpService  with Json4sSupport {
+  implicit def json4sFormats: Formats = Serialization.formats(NoTypeHints)
 
   val cometActor = actorRefFactory.actorOf(Props[CometActor])
+
 
   def showRepoResponses(request: HttpRequest): HttpResponsePart ⇒ Option[LogEntry] = {
     case HttpResponse(s, _, _, _) ⇒ Some(LogEntry(s"${s.intValue}: ${request.uri}", Logging.DebugLevel))
@@ -86,9 +94,7 @@ trait MyService extends HttpService with TwirlSupport {
   val myRoute =
     logRequestResponse(showRepoResponses _) {
       path("") {
-        get {
-          complete(html.page())
-        }
+        getFromResource("webroot/index.html")
       } ~
       path("comet") {
         get {
@@ -96,15 +102,12 @@ trait MyService extends HttpService with TwirlSupport {
         }
       } ~
       path("sendMessage") {
-        get {
-          parameters('name, 'message) { (name: String, message: String) =>
-            cometActor ! BroadcastMessage(HttpEntity("%s : %s".format(name, message)))
+        post {
+          entity(as[ChatMessage]) { m =>
+            cometActor ! BroadcastMessage(HttpEntity("%s : %s".format(m.name, m.message)))
             complete(StatusCodes.OK)
           }
         }
-      } ~
-      pathPrefix("static" / Segment) { dir =>
-        getFromResourceDirectory(dir)
       } ~
       pathPrefixTest(Segment) { file =>
         getFromResourceDirectory("webroot")
